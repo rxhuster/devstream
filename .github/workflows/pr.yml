@@ -60,6 +60,21 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-${{ matrix.go }}-
       - name: Test
-        run: go test -v ./...
+        run: go test -coverpkg=./... -coverprofile=cover.out --timeout=10m ./...
       - name: Build
         run: make build -j8
+      - name: Install goveralls 
+        run: go install github.com/mattn/goveralls@latest
+      - name: Send coverage
+        env:
+          COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+       run: goveralls -coverprofile=cover.out -service=github
+  finish:
+    needs: [build-and-test]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Coveralls Finished
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        parallel-finished: true
